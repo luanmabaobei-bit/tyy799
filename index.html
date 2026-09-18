@@ -42,6 +42,15 @@ body{background:linear-gradient(#a8dcf7,#7ec8f0 55%,#c8ecff);font-family:"PingFa
        不能溢出，也不能大片留白。
    ======================================================== */
 #app{position:fixed;inset:0;z-index:3}
+/* 滚动兜底：每一页的量身计算在绝大多数设备上都是精确贴合、不会出现滚动条的，
+   但没法保证在所有没测过的浏览器内核/系统缩放下都分毫不差。这里只把
+   overflow-y:auto 加在"每一页真正装内容的那个容器"上（不是最外层的 .view，
+   那样会连带把帷幕这类故意滑出屏幕的装饰元素也算成"可滚动内容"，出现没有意义
+   的滚动条）——这样万一某台设备上真的算出偏差，至少还能滚动找到按钮，
+   而不是被 .view 的 overflow:hidden 彻底裁掉、无法触达 */
+.l1-wrap,.l2-wrap,.l3-wrap,.l4-wrap,.l5-wrap,.l6-wrap,.l7-wrap,.l8-wrap,.wu-wrap,.l10-wrap,.l12-wrap,.l13-wrap,.home-content{
+ overflow-y:auto;overflow-x:hidden;max-height:100%;
+}
 .view{position:absolute;inset:0;overflow:hidden;display:none}
 .view.on{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px;animation:viewIn .3s steps(5)}
 @keyframes viewIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
@@ -812,7 +821,7 @@ h1.t{font-size:28px;margin:12px 0 4px;font-weight:900;letter-spacing:2px;color:#
 /* ---- 颁奖台（v-l12）：像素阶梯领奖台风格，和主页面风格保持一致 ---- */
 #v-l12.on{display:flex;flex-direction:column;padding:16px 16px 84px;align-items:center}
 .l12-wrap{width:100%;max-width:98vw;margin:0 auto;height:100%;display:flex;flex-direction:column;align-items:center}
-.l12-podium-row{flex:1;min-height:0;display:flex;align-items:flex-end;justify-content:center;gap:14px;width:100%;max-width:1200px}
+.l12-podium-row{flex:0 1 auto;margin:auto 0;min-height:0;display:flex;align-items:flex-end;justify-content:center;gap:14px;width:100%;max-width:1200px}
 
 .l12-step{display:flex;flex-direction:column;align-items:center;flex:1;max-width:200px;min-width:0}
 .l12-step-card{background:var(--panel);border:4px solid var(--ink);box-shadow:4px 4px 0 rgba(27,36,71,.7);padding:8px;width:100%;margin-bottom:-4px;z-index:3;position:relative}
@@ -827,7 +836,8 @@ h1.t{font-size:28px;margin:12px 0 4px;font-weight:900;letter-spacing:2px;color:#
 .l12-riser{width:100%;border:4px solid var(--ink);border-top:none;box-shadow:4px 4px 0 rgba(27,36,71,.7);
  display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex:0 0 auto}
 .l12-riser::before{content:'';position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,rgba(0,0,0,.08) 0 6px,transparent 6px 12px)}
-.l12-riser-num{font-size:min(4vw,32px);font-weight:900;color:var(--ink);text-shadow:2px 2px 0 rgba(255,255,255,.4);z-index:1}
+.l12-riser-num{width:min(5.5vw,36px);height:min(5.5vw,36px);display:flex;align-items:center;justify-content:center;color:var(--ink);z-index:1}
+.l12-riser-num .l12-trophy-icon{width:100%;height:100%;display:block;filter:drop-shadow(2px 2px 0 rgba(255,255,255,.4))}
 
 .l12-step.l12-center .l12-riser{height:min(20vh,150px);background:var(--coin)}
 .l12-step.l12-inner .l12-riser{height:min(14vh,104px);background:var(--silver)}
@@ -954,8 +964,8 @@ h1.t{font-size:28px;margin:12px 0 4px;font-weight:900;letter-spacing:2px;color:#
 
 <!-- ============================================================
      ① 幕布开场 · 视频 + 主编对白（v-home）
-     视频：把 <source src="..."> 换成你自己的视频文件路径即可，
-     替换后左边的占位提示会自动消失。
+     视频：文件命名为 intro.mp4，放进 photos 文件夹即可自动播放，
+     放好后左边的占位提示会自动消失。
      ============================================================ -->
 <section class="view" id="v-home">
  <div class="curtain">
@@ -966,11 +976,11 @@ h1.t{font-size:28px;margin:12px 0 4px;font-weight:900;letter-spacing:2px;color:#
  <div class="home-content">
   <div class="home-video-box">
    <video id="homeVideo" class="home-video" playsinline controls>
-    <!-- 在这里替换成你自己的视频文件，例如：<source src="videos/intro.mp4" type="video/mp4"> -->
+    <source src="photos/intro.mp4" type="video/mp4">
    </video>
    <div class="home-video-placeholder" id="homeVideoPh">
     <div class="pico">🎬</div>
-    <div>这里播放开场视频<small>把 &lt;source src="..."&gt; 换成你的视频文件即可</small></div>
+    <div>这里播放开场视频<small>把视频文件命名为 intro.mp4，放进 photos 文件夹即可</small></div>
    </div>
   </div>
 
@@ -1583,8 +1593,8 @@ h1.t{font-size:28px;margin:12px 0 4px;font-weight:900;letter-spacing:2px;color:#
    </div>
    <div class="wu-empty hidden" id="wuEmpty">
     <div class="wu-empty-icon">📷</div>
-    <div class="wu-empty-text">还没拍满12张照片</div>
-    <div class="wu-empty-sub" id="wuEmptySub">已经拍了 0 / 12 张，请先回到实拍页面拍满12张</div>
+    <div class="wu-empty-text">还没有拍照片</div>
+    <div class="wu-empty-sub" id="wuEmptySub">还没有拍任何照片，请先回到实拍页面拍一张</div>
    </div>
    <div class="wu-dots" id="wuDots"></div>
   </div>
@@ -1632,8 +1642,8 @@ h1.t{font-size:28px;margin:12px 0 4px;font-weight:900;letter-spacing:2px;color:#
       <label>景别</label>
       <div class="l10-opt-row" id="l10ShotRow">
        <button class="l10-opt-btn" data-v="远景">远景</button>
-       <button class="l10-opt-btn" data-v="全景">全景</button>
        <button class="l10-opt-btn" data-v="中景">中景</button>
+       <button class="l10-opt-btn" data-v="近景">近景</button>
        <button class="l10-opt-btn" data-v="特写">特写</button>
       </div>
      </div>
@@ -1731,7 +1741,7 @@ h1.t{font-size:28px;margin:12px 0 4px;font-weight:900;letter-spacing:2px;color:#
      <div class="l12-step-author"></div>
      <div class="l12-step-count"></div>
     </div>
-    <div class="l12-riser"><div class="l12-medal">🏅</div><div class="l12-riser-num">4</div></div>
+    <div class="l12-riser"><div class="l12-medal">🏅</div><div class="l12-riser-num" data-rank="4"><svg class="l12-trophy-icon" viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><rect x="2" y="0" width="4" height="1"/><rect x="1" y="1" width="6" height="1"/><rect x="0" y="2" width="8" height="1"/><rect x="1" y="3" width="6" height="1"/><rect x="2" y="4" width="4" height="1"/><rect x="3" y="5" width="2" height="1"/><rect x="2" y="6" width="4" height="1"/><rect x="1" y="7" width="6" height="1"/></svg></div></div>
    </div>
 
    <div class="l12-step l12-inner" data-award="clearest_intent">
@@ -1742,7 +1752,7 @@ h1.t{font-size:28px;margin:12px 0 4px;font-weight:900;letter-spacing:2px;color:#
      <div class="l12-step-author"></div>
      <div class="l12-step-count"></div>
     </div>
-    <div class="l12-riser"><div class="l12-medal">🥈</div><div class="l12-riser-num">2</div></div>
+    <div class="l12-riser"><div class="l12-medal">🥈</div><div class="l12-riser-num" data-rank="2"><svg class="l12-trophy-icon" viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><rect x="2" y="0" width="4" height="1"/><rect x="1" y="1" width="6" height="1"/><rect x="0" y="2" width="8" height="1"/><rect x="1" y="3" width="6" height="1"/><rect x="2" y="4" width="4" height="1"/><rect x="3" y="5" width="2" height="1"/><rect x="2" y="6" width="4" height="1"/><rect x="1" y="7" width="6" height="1"/></svg></div></div>
    </div>
 
    <div class="l12-step l12-center" data-award="popularity">
@@ -1753,7 +1763,7 @@ h1.t{font-size:28px;margin:12px 0 4px;font-weight:900;letter-spacing:2px;color:#
      <div class="l12-step-author"></div>
      <div class="l12-step-count"></div>
     </div>
-    <div class="l12-riser"><div class="l12-medal">🥇</div><div class="l12-riser-num">1</div></div>
+    <div class="l12-riser"><div class="l12-medal">🥇</div><div class="l12-riser-num" data-rank="1"><svg class="l12-trophy-icon" viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><rect x="2" y="0" width="4" height="1"/><rect x="1" y="1" width="6" height="1"/><rect x="0" y="2" width="8" height="1"/><rect x="1" y="3" width="6" height="1"/><rect x="2" y="4" width="4" height="1"/><rect x="3" y="5" width="2" height="1"/><rect x="2" y="6" width="4" height="1"/><rect x="1" y="7" width="6" height="1"/></svg></div></div>
    </div>
 
    <div class="l12-step l12-inner" data-award="chasing_light">
@@ -1764,7 +1774,7 @@ h1.t{font-size:28px;margin:12px 0 4px;font-weight:900;letter-spacing:2px;color:#
      <div class="l12-step-author"></div>
      <div class="l12-step-count"></div>
     </div>
-    <div class="l12-riser"><div class="l12-medal">🥈</div><div class="l12-riser-num">2</div></div>
+    <div class="l12-riser"><div class="l12-medal">🥈</div><div class="l12-riser-num" data-rank="2"><svg class="l12-trophy-icon" viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><rect x="2" y="0" width="4" height="1"/><rect x="1" y="1" width="6" height="1"/><rect x="0" y="2" width="8" height="1"/><rect x="1" y="3" width="6" height="1"/><rect x="2" y="4" width="4" height="1"/><rect x="3" y="5" width="2" height="1"/><rect x="2" y="6" width="4" height="1"/><rect x="1" y="7" width="6" height="1"/></svg></div></div>
    </div>
 
    <div class="l12-step l12-outer" data-award="lens_master">
@@ -1775,11 +1785,11 @@ h1.t{font-size:28px;margin:12px 0 4px;font-weight:900;letter-spacing:2px;color:#
      <div class="l12-step-author"></div>
      <div class="l12-step-count"></div>
     </div>
-    <div class="l12-riser"><div class="l12-medal">🏅</div><div class="l12-riser-num">4</div></div>
+    <div class="l12-riser"><div class="l12-medal">🏅</div><div class="l12-riser-num" data-rank="4"><svg class="l12-trophy-icon" viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><rect x="2" y="0" width="4" height="1"/><rect x="1" y="1" width="6" height="1"/><rect x="0" y="2" width="8" height="1"/><rect x="1" y="3" width="6" height="1"/><rect x="2" y="4" width="4" height="1"/><rect x="3" y="5" width="2" height="1"/><rect x="2" y="6" width="4" height="1"/><rect x="1" y="7" width="6" height="1"/></svg></div></div>
    </div>
   </div>
 
-  <button class="btn btn-primary" id="g3dCeremonyClose" style="margin-top:20px">← 返回画廊</button>
+  <button class="btn btn-primary" id="g3dCeremonyClose" style="margin-top:20px">小结 →</button>
  </div>
 </section>
 
@@ -1848,6 +1858,22 @@ h1.t{font-size:28px;margin:12px 0 4px;font-weight:900;letter-spacing:2px;color:#
  </div>
 </div>
 
+<!-- 教师验证通过后：创建新房间 / 输入房间号重新加入已有房间 -->
+<div class="modal-layer hidden" id="modalTeacherChoice">
+ <div class="modal-box">
+  <h3>🏫 进入教师模式</h3>
+  <div class="dim">如果是不小心退出、想回到刚才带的那个班，输入房间号重新加入；否则创建一个新房间</div>
+  <input class="field code" id="rejoinCode" placeholder="0000" maxlength="4" inputmode="numeric">
+  <div class="modal-actions">
+   <button class="btn btn-primary" id="btnRejoinRoom">重新加入这个房间</button>
+  </div>
+  <div class="modal-actions" style="margin-top:6px">
+   <button class="btn btn-ghost" id="btnCreateNewRoom">创建新房间</button>
+   <button class="mini" id="btnTeacherChoiceCancel">取消</button>
+  </div>
+ </div>
+</div>
+
 <!-- 学生加入弹层 -->
 <div class="modal-layer hidden" id="modalJoin">
  <div class="modal-box">
@@ -1876,6 +1902,21 @@ h1.t{font-size:28px;margin:12px 0 4px;font-weight:900;letter-spacing:2px;color:#
    <button class="btn btn-ghost" id="btnConsoleClose">继续上课</button>
    <button class="mini warn" id="btnEndRoom">结束本次房间</button>
   </div>
+  <div class="modal-actions" style="margin-top:6px">
+   <button class="mini warn" id="btnClearGallery">🗑 清空云端画廊照片</button>
+  </div>
+ </div>
+</div>
+
+<!-- 清空云端画廊二次确认 -->
+<div class="modal-layer hidden" id="modalClearGallery">
+ <div class="modal-box">
+  <h3>⚠️ 清空云端画廊</h3>
+  <div class="dim">全班已经提交的所有作品照片、投票都会被永久删除，无法恢复。确定要清空吗？</div>
+  <div class="modal-actions">
+   <button class="mini warn" id="btnClearGalleryConfirm">确认清空</button>
+   <button class="btn btn-ghost" id="btnClearGalleryCancel">取消</button>
+  </div>
  </div>
 </div>
 
@@ -1888,7 +1929,7 @@ h1.t{font-size:28px;margin:12px 0 4px;font-weight:900;letter-spacing:2px;color:#
    ======================================================== */
 const $=s=>document.querySelector(s);
 /* 景别四张照片的文件名——"景别滑杆"、"景别图鉴"、"公众号配图挑战"三处共用同一套，
-   按 0=远景/1=全景/2=中景/3=特写 的顺序对应，以后想换照片文件名，改这一个数组就行 */
+   按 0=远景/1=中景/2=近景/3=特写 的顺序对应，以后想换照片文件名，改这一个数组就行 */
 const SCENE_FILES=['scene-wide.jpg','scene-building.jpg','scene-window.jpg','scene-brick.jpg'];
 const $$=s=>Array.prototype.slice.call(document.querySelectorAll(s));
 function LSget(k){try{return localStorage.getItem(k)}catch(e){return null}}
@@ -2298,7 +2339,7 @@ $('#l1Shutter').onclick=function(){
 /* ========================================================
    ③ 第二关 · 练习景别（v-l2）
    ======================================================== */
-let l2Seg=0,l2Shots=[false,false,false,false],l2Pending=null,l2FilledCount=0,l2Dragging=false;
+let l2Seg=0,l2Shots=[false,false,false,false],l2Dragging=false;
 
 /* 取景框尺寸：直接按"这一页实际可用的空间"用JS算，而不是猜CSS比例系数——
    目标：宽度尽量接近舞台宽度的70%，同时保证加上滑竿之后的总高度绝对不会超出可用高度 */
@@ -2337,7 +2378,7 @@ function shuffleArr(arr){
 }
 
 function enterL2(){
- l2Seg=0;l2Shots=[false,false,false,false];l2Pending=null;l2FilledCount=0;l2Dragging=false;
+ l2Seg=0;l2Shots=[false,false,false,false];l2Dragging=false;
  l2Fit();
  updateL2Scene();
  $$('#l2Slots .l2-slot').forEach(function(el){el.classList.remove('filled');el.innerHTML=''});
@@ -2361,7 +2402,7 @@ function l2SetSeg(i){
  if(i!==l2Seg){
   l2Seg=i;
   updateL2Scene();
-  if(l2Shots[i])toast('这个景别拍过啦');
+  if(l2Shots[i])toast('这个景别已经答对过了');
  }
 }
 
@@ -2387,16 +2428,19 @@ $('#l2Slider').addEventListener('click',function(e){
  l2SetSeg(l2PosToSeg(e.clientX));
 });
 
+/* 现在不需要先按快门"拍一张"再作答——相机移动到哪个景别区域，
+   取景框显示的就是那个画面，直接点选项作答即可 */
 $$('#l2Opts .l2-opt').forEach(function(el){
  el.onclick=function(){
-  if(l2Pending==null){toast('先按右上角快门拍一张');return}
   if(el.classList.contains('done'))return;
   const ans=parseInt(el.dataset.ans,10);
-  if(ans===l2Pending){
+  if(ans===l2Seg){
    el.classList.add('done');
-   l2Shots[l2Pending]=true;
-   l2Pending=null;
+   l2Shots[l2Seg]=true;
    sfx('ding');
+   const slot=$$('#l2Slots .l2-slot')[l2Seg]; // 四个格子固定对应四个景别的位置，不管学生按什么顺序答对
+   slot.classList.add('filled');
+   slot.innerHTML='<div class="l2-thumb"><img class="l2-thumb-photo" src="photos/'+SCENE_FILES[l2Seg]+'" alt="" onerror="this.style.display=\'none\'"><div class="l2-thumb-fallback thumb-'+l2Seg+'"></div></div>';
    if(l2Shots.every(Boolean)){
     sfx('level');
     $('#l2Shutter').classList.add('ready');
@@ -2410,22 +2454,14 @@ $$('#l2Opts .l2-opt').forEach(function(el){
  };
 });
 
-/* 快门键身兼两职：平时按一下=拍下当前景别；全部拍对之后变红，
-   这时候按一下=翻到下一页（配合白闪转场） */
+/* 快门键现在只做一件事：四个景别都答对之后变红，按一下翻到下一页 */
 $('#l2Shutter').onclick=function(){
  if($('#l2Shutter').classList.contains('ready')){
   sfx('shutter');
   cameraFlash(advanceFromHere);
-  return;
+ }else{
+  toast('先移动镜头，把四个景别都选对');
  }
- if(l2Shots[l2Seg]){toast('这个景别已经拍过啦，换一个试试');return}
- if(l2Pending!=null){toast('先给刚才那张选一个答案吧');return}
- sfx('shutter');
- l2Pending=l2Seg;
- const slot=$$('#l2Slots .l2-slot')[l2FilledCount];
- slot.classList.add('filled');
- slot.innerHTML='<div class="l2-thumb"><img class="l2-thumb-photo" src="photos/'+SCENE_FILES[l2Seg]+'" alt="" onerror="this.style.display=\'none\'"><div class="l2-thumb-fallback thumb-'+l2Seg+'"></div></div>';
- l2FilledCount++;
 };
 
 /* ========================================================
@@ -3219,11 +3255,11 @@ function l9RenderDots(){
 }
 
 function l9RenderTrack(){
- if(l8Photos.length<MAX_PHOTOS){
+ if(l8Photos.length===0){
   l9CarouselRow.classList.add('hidden');
   l9Dots.classList.add('hidden');
   l9Empty.classList.remove('hidden');
-  l9EmptySub.textContent='已经拍了 '+l8Photos.length+' / '+MAX_PHOTOS+' 张，请先回到实拍页面拍满'+MAX_PHOTOS+'张';
+  l9EmptySub.textContent='还没有拍任何照片，请先回到实拍页面拍一张';
   clearInterval(l9AutoTimer);
   return;
  }
@@ -3510,7 +3546,7 @@ function l11MakeDemoArtworks(n){
    title:'作品 No.'+(i+1),
    author:['小明','小红','小刚','小雨','小艺'][i%5],
    className:L11_DEMO_CLASSES[i%L11_DEMO_CLASSES.length],
-   scale:['远景','全景','中景','特写'][i%4],
+   scale:['远景','中景','近景','特写'][i%4],
    angle:['仰拍','平拍','俯拍'][i%3],
    description:'这是一段示例的拍摄意图说明文字，用来测试标签排版效果是否合适。',
    createdAt:Date.now()-i*60000
@@ -4168,7 +4204,7 @@ $('#g3dCeremonyBtn').addEventListener('click',function(){
 });
 $('#g3dCeremonyClose').addEventListener('click',function(){
  sfx('click');
- goto('v-l11');
+ advanceFromHere(); // 颁奖台之后是"课后小结"（v-l13），按 VIEW_ORDER 顺序走到下一页
 });
 $('#g3dUploadBtn').addEventListener('click',function(){
  sfx('click');
@@ -4587,12 +4623,52 @@ async function submitTeacherPassword(){
  }
  $('#modalPw').classList.add('hidden');
  sfx('click');
+ $('#rejoinCode').value='';
+ $('#modalTeacherChoice').classList.remove('hidden');
+ setTimeout(function(){$('#rejoinCode').focus()},50);
+}
+
+async function rejoinRoomAsTeacher(code){
+ if(!sb){toast('联网组件未加载，请检查网络后刷新重试');return null}
+ if(!/^\d{4}$/.test(code)){toast('房间号是4位数字，请检查一下');return null}
+ const {data,error}=await sb.from('mv_rooms').select('*').eq('room_code',code).maybeSingle();
+ if(error){toast('查询失败：'+errMsg(error),3200);return null}
+ if(!data){toast('没有找到房间 '+code+'，确认一下房间号是否正确');return null}
+
+ /* 如果这台设备之前是学生身份加入了某个房间，先清掉旧的连接和本地状态 */
+ if(Room.channel){try{sb.removeChannel(Room.channel)}catch(e){}Room.channel=null}
+ clearInterval(Room.heartbeatTimer);
+
+ const token=genToken();
+ /* teacher_token 只是记录用途（roomSetView 广播翻页时并不校验它），
+    这里更新一下只是保持数据整洁，不影响能不能重新加入 */
+ await sb.from('mv_rooms').update({teacher_token:token}).eq('room_code',code);
+ Room.active=true;Room.role='teacher';Room.code=code;Room.teacherToken=token;
+ LSset('mv_role','teacher');LSset('mv_room',code);LSset('mv_token',token);
+ subscribeRoom(code);
+ applyRoomUI();
+ if(data.current_view)show(data.current_view); // 回到全班目前所在的页面，而不是老师本机原来停留的页面
+ return code;
+}
+
+$('#btnRejoinRoom').onclick=async function(){
+ const code=$('#rejoinCode').value.trim();
+ const result=await rejoinRoomAsTeacher(code);
+ if(result){
+  $('#modalTeacherChoice').classList.add('hidden');
+  toast('已重新加入房间 '+result);
+  openConsole();
+ }
+};
+$('#btnCreateNewRoom').onclick=async function(){
+ $('#modalTeacherChoice').classList.add('hidden');
  const code=await createRoom();
  if(code){
   toast('房间已创建：'+code);
   openConsole();
  }
-}
+};
+$('#btnTeacherChoiceCancel').onclick=function(){ $('#modalTeacherChoice').classList.add('hidden') };
 
 /* ========================================================
    事件绑定 + 初始化
@@ -4635,6 +4711,43 @@ $('#btnConsole').onclick=function(){sfx('tap');openConsole()};
 $('#btnConsoleClose').onclick=closeConsole;
 $('#btnEndRoom').onclick=function(){
  if(confirm('结束本次房间？学生端会停在当前页面，房间号将失效。')){endRoom()}
+};
+
+$('#btnClearGallery').onclick=function(){
+ $('#modalClearGallery').classList.remove('hidden');
+};
+$('#btnClearGalleryCancel').onclick=function(){
+ $('#modalClearGallery').classList.add('hidden');
+};
+$('#btnClearGalleryConfirm').onclick=async function(){
+ if(!sb){toast('联网组件未加载，请检查网络后重试');return}
+ const btn=$('#btnClearGalleryConfirm');
+ btn.disabled=true;
+ const oldText=btn.textContent;
+ btn.textContent='清空中…';
+ try{
+  const {error}=await sb.from('mv_works').delete().gt('id',0);
+  if(error){
+   toast('清空失败：'+errMsg(error),3200);
+   btn.disabled=false;btn.textContent=oldText;
+   return;
+  }
+  /* 如果画廊页面已经加载过，本地也同步清空，不用等下次重新进页面才刷新 */
+  if(typeof l11Artworks!=='undefined' && l11Artworks.length){
+   l11Artworks.forEach(function(r){
+    if(r.mesh && r.mesh.parent) r.mesh.parent.remove(r.mesh);
+   });
+   l11Artworks.length=0;
+   if(typeof l11UpdateCount==='function')l11UpdateCount();
+  }
+  $('#modalClearGallery').classList.add('hidden');
+  btn.disabled=false;btn.textContent=oldText;
+  toast('云端画廊已清空');
+ }catch(err){
+  console.error(err);
+  toast('清空失败，请检查网络后重试');
+  btn.disabled=false;btn.textContent=oldText;
+ }
 };
 
 $('#homeDlg').onclick=homeDlgAdvance;
