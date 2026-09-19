@@ -975,7 +975,7 @@ h1.t{font-size:28px;margin:12px 0 4px;font-weight:900;letter-spacing:2px;color:#
 
  <div class="home-content">
   <div class="home-video-box">
-   <video id="homeVideo" class="home-video" playsinline controls preload="metadata">
+   <video id="homeVideo" class="home-video" playsinline controls>
     <source src="photos/intro.mp4" type="video/mp4">
    </video>
    <div class="home-video-placeholder" id="homeVideoPh">
@@ -1554,6 +1554,7 @@ h1.t{font-size:28px;margin:12px 0 4px;font-weight:900;letter-spacing:2px;color:#
       <button class="l8-shutter" id="l8Shutter" title="拍摄"></button>
       <button class="l8-upload-btn" id="l8UploadBtn" title="从相册选照片">📁 从相册选照片</button>
       <input type="file" id="l8FileInput" accept="image/*" multiple style="display:none">
+      <input type="file" id="l8CameraInput" accept="image/*" capture="environment" style="display:none">
      </div>
     </div>
    </div>
@@ -2970,7 +2971,24 @@ function enterL7(){
 
 /* ========================================================
    ⑨ 户外实拍 · 真实摄像头拍摄（v-l8）
+   ------------------------------------------------------------
+   电脑：沿用取景框内嵌摄像头实时画面 + 快门键从画面里截一帧
+        （getUserMedia 方案，保持原样不变）。
+   平板/手机等触屏设备：取景框不再请求摄像头画面，快门键改成
+        直接唤起设备自带的相机App拍照，拍完自动带着照片回到
+        这一页——原因是很多平板浏览器里内嵌的摄像头画面分辨率低、
+        对焦曝光都不如系统相机，交给系统相机拍出来的照片更清楚。
+        判断依据是"主输入方式是否为触屏"（pointer:coarse），
+        不依赖 User-Agent 字符串（新款 iPad 的 UA 会伪装成 Mac，
+        UA判断并不可靠）。
    ======================================================== */
+function isTouchDevice(){
+ try{
+  if(window.matchMedia && window.matchMedia('(pointer:coarse)').matches)return true;
+ }catch(e){}
+ return (navigator.maxTouchPoints||0)>1 || ('ontouchstart' in window);
+}
+const IS_TOUCH_DEVICE=isTouchDevice();
 const l8VideoEl=$('#l8Video'), l8VfMsg=$('#l8VfMsg'), l8ShutterBtn=$('#l8Shutter');
 let l8CameraReady=false, l8Stream=null;
 const L8_CAM_K=0.93;
@@ -3115,7 +3133,18 @@ function l8Capture(){
  l8ShutterBtn.disabled=true;
  setTimeout(function(){ if(l8CameraReady)l8ShutterBtn.disabled=false },400);
 }
-l8ShutterBtn.addEventListener('click',l8Capture);
+function l8ShutterClick(){
+ if(IS_TOUCH_DEVICE){
+  if(l8Photos.length>=MAX_PHOTOS){
+   toast('已经拍了12张。先删掉一张，再继续拍摄。');
+   return;
+  }
+  $('#l8CameraInput').click(); // 唤起系统相机App，拍完自动带着照片回到这一页
+ }else{
+  l8Capture(); // 电脑：从取景框里的实时摄像头画面截一帧，逻辑不变
+ }
+}
+l8ShutterBtn.addEventListener('click',l8ShutterClick);
 
 /* ========================================================
    从相册导入照片——给"老师带着网络离开教室"这种场景多一条退路：
@@ -3177,6 +3206,44 @@ $('#l8FileInput').addEventListener('change',function(e){
  e.target.value=''; // 清空，保证下次选同一张文件也能触发change
 });
 
+/* 平板/手机：快门键唤起系统相机拍完之后，走这里把照片收进来——
+   裁切成4:3、快门声、白闪、照片"弹出"动画，跟电脑那套截屏逻辑
+   观感保持一致，唯一区别是画面来源是相机App拍好的文件，不是
+   实时视频流里的一帧 */
+async function l8CaptureFromFile(file){
+ if(l8Photos.length>=MAX_PHOTOS){
+  toast('已经拍了12张。先删掉一张，再继续拍摄。');
+  return;
+ }
+ try{
+  const img=await l8LoadImageFile(file);
+  const vw=img.naturalWidth, vh=img.naturalHeight;
+  const targetRatio=4/3;
+  let sx=0, sy=0, sw=vw, sh=vh;
+  if(vw/vh > targetRatio){ sw=vh*targetRatio; sx=(vw-sw)/2 }
+  else{ sh=vw/targetRatio; sy=(vh-sh)/2 }
+  const canvas=$('#l8Canvas');
+  canvas.width=480; canvas.height=360;
+  const ctx=canvas.getContext('2d');
+  ctx.drawImage(img, sx,sy,sw,sh, 0,0,480,360);
+  const url=canvas.toDataURL('image/jpeg',0.85);
+  sfx('shutter');
+  l8PhotoSeq++;
+  l8Photos.push({id:'p'+l8PhotoSeq, url:url});
+  l8EjectPhoto(url);
+  l8LayoutRacks();
+  cameraFlash(function(){});
+ }catch(err){
+  console.error('拍照导入失败',err);
+  toast('这张照片没能读取，再拍一次试试');
+ }
+}
+$('#l8CameraInput').addEventListener('change',function(e){
+ const file=e.target.files&&e.target.files[0];
+ e.target.value=''; // 清空，保证下次拍照/同一张照片也能再次触发change
+ if(file)l8CaptureFromFile(file);
+});
+
 function l8OpenLightbox(id){
  const idx=l8Photos.findIndex(function(p){return p.id===id});
  if(idx<0)return;
@@ -3199,7 +3266,15 @@ $('#btnL8Continue').onclick=function(){
 
 function enterL8(){
  l8Fit();
- l8InitCamera(); // 内部已做"已经开着就不重复请求"的保护，可以放心每次进入都调用
+ if(IS_TOUCH_DEVICE){
+  // 平板/手机：不请求摄像头画面，取景框里只显示提示语，
+  // 快门键随时可点（点了直接唤起系统相机，不需要"摄像头准备中"这一步）
+  l8ShowVfMsg('点击下方「拍摄」按钮，<br>用相机拍一张');
+  l8CameraReady=true;
+  l8ShutterBtn.disabled=false;
+ }else{
+  l8InitCamera(); // 内部已做"已经开着就不重复请求"的保护，可以放心每次进入都调用
+ }
 }
 
 /* ========================================================
